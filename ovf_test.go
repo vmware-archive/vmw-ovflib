@@ -3,10 +3,10 @@ package ovf
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
-var data = []byte(`<?xml version="1.0" encoding="UTF-8"?>
+var data_vsphere = []byte(`<?xml version="1.0" encoding="UTF-8"?>
 <Environment
      xmlns="http://schemas.dmtf.org/ovf/environment/1"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -29,28 +29,80 @@ var data = []byte(`<?xml version="1.0" encoding="UTF-8"?>
    </ve:EthernetAdapterSection>
 </Environment>`)
 
+var data_vapprun = []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<Environment xmlns="http://schemas.dmtf.org/ovf/environment/1"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xmlns:oe="http://schemas.dmtf.org/ovf/environment/1"
+     oe:id="CoreOS-vmw">
+   <PlatformSection>
+      <Kind>vapprun</Kind>
+      <Version>1.0</Version>
+      <Vendor>VMware, Inc.</Vendor>
+      <Locale>en_US</Locale>
+   </PlatformSection>
+   <PropertySection>
+      <Property oe:key="foo" oe:value="42"/>
+      <Property oe:key="bar" oe:value="0"/>
+      <Property oe:key="guestinfo.user_data.url" oe:value="https://gist.githubusercontent.com/sigma/5a64aac1693da9ca70d2/raw/plop.yaml"/>
+      <Property oe:key="guestinfo.user_data.doc" oe:value=""/>
+      <Property oe:key="guestinfo.meta_data.url" oe:value=""/>
+      <Property oe:key="guestinfo.meta_data.doc" oe:value=""/>
+   </PropertySection>
+</Environment>`)
+
 func TestOvfEnvProperties(t *testing.T) {
-	env := ReadEnvironment(data)
-	props := env.Properties
 
-	var val string
-	var ok bool
+	var testerFunc = func(env *OvfEnvironment) {
+		props := env.Properties
 
-	val, ok = props["foo"]
-	assert.True(t, ok)
-	assert.Equal(t, val, "42")
+		var val string
+		var ok bool
+		Convey(`Property "foo"`, func() {
+			val, ok = props["foo"]
+			So(ok, ShouldBeTrue)
+			So(val, ShouldEqual, "42")
+		})
 
-	val, ok = props["bar"]
-	assert.True(t, ok)
-	assert.Equal(t, val, "0")
+		Convey(`Property "bar"`, func() {
+			val, ok = props["bar"]
+			So(ok, ShouldBeTrue)
+			So(val, ShouldEqual, "0")
+		})
+	}
+
+	Convey("With vSphere environment", t, func() {
+		env := ReadEnvironment(data_vsphere)
+		testerFunc(env)
+	})
+
+	Convey("With vAppRun environment", t, func() {
+		env := ReadEnvironment(data_vapprun)
+		testerFunc(env)
+	})
 }
 
 func TestOvfEnvPlatform(t *testing.T) {
-	env := ReadEnvironment(data)
-	platform := env.Platform
+	Convey("With vSphere environment", t, func() {
+		env := ReadEnvironment(data_vsphere)
+		platform := env.Platform
 
-	assert.Equal(t, platform.Kind, "VMware ESXi")
-	assert.Equal(t, platform.Version, "5.5.0")
-	assert.Equal(t, platform.Vendor, "VMware, Inc.")
-	assert.Equal(t, platform.Locale, "en")
+		So(platform.Kind, ShouldEqual, "VMware ESXi")
+		So(platform.Version, ShouldEqual, "5.5.0")
+		So(platform.Vendor, ShouldEqual, "VMware, Inc.")
+		So(platform.Locale, ShouldEqual, "en")
+	})
+}
+
+func TestVappRunUserDataUrl(t *testing.T) {
+	Convey("With vAppRun environment", t, func() {
+		env := ReadEnvironment(data_vapprun)
+		props := env.Properties
+
+		var val string
+		var ok bool
+
+		val, ok = props["guestinfo.user_data.url"]
+		So(ok, ShouldBeTrue)
+		So(val, ShouldEqual, "https://gist.githubusercontent.com/sigma/5a64aac1693da9ca70d2/raw/plop.yaml")
+	})
 }
