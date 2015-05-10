@@ -52,33 +52,29 @@ var data_vapprun = []byte(`<?xml version="1.0" encoding="UTF-8"?>
 
 func TestOvfEnvProperties(t *testing.T) {
 
-	var testerFunc = func(env *OvfEnvironment) {
-		props := env.Properties
+	var testerFunc = func(env_str []byte) func() {
+		return func() {
+			env := ReadEnvironment(env_str)
+			props := env.Properties
 
-		var val string
-		var ok bool
-		Convey(`Property "foo"`, func() {
-			val, ok = props["foo"]
-			So(ok, ShouldBeTrue)
-			So(val, ShouldEqual, "42")
-		})
+			var val string
+			var ok bool
+			Convey(`Property "foo"`, func() {
+				val, ok = props["foo"]
+				So(ok, ShouldBeTrue)
+				So(val, ShouldEqual, "42")
+			})
 
-		Convey(`Property "bar"`, func() {
-			val, ok = props["bar"]
-			So(ok, ShouldBeTrue)
-			So(val, ShouldEqual, "0")
-		})
+			Convey(`Property "bar"`, func() {
+				val, ok = props["bar"]
+				So(ok, ShouldBeTrue)
+				So(val, ShouldEqual, "0")
+			})
+		}
 	}
 
-	Convey("With vSphere environment", t, func() {
-		env := ReadEnvironment(data_vsphere)
-		testerFunc(env)
-	})
-
-	Convey("With vAppRun environment", t, func() {
-		env := ReadEnvironment(data_vapprun)
-		testerFunc(env)
-	})
+	Convey("With vAppRun environment", t, testerFunc(data_vapprun))
+	Convey("With vSphere environment", t, testerFunc(data_vsphere))
 }
 
 func TestOvfEnvPlatform(t *testing.T) {
