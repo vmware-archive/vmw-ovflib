@@ -102,3 +102,9 @@ func TestVappRunUserDataUrl(t *testing.T) {
 		So(val, ShouldEqual, "https://gist.githubusercontent.com/sigma/5a64aac1693da9ca70d2/raw/plop.yaml")
 	})
 }
+
+func TestInvalidData(t *testing.T) {
+	Convey("With invalid data", t, func() {
+		ReadEnvironment(append(data_vsphere, []byte("garbage")...))
+	})
+}
