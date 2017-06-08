@@ -68,7 +68,8 @@ func TestOvfEnvProperties(t *testing.T) {
 
 	var testerFunc = func(env_str []byte) func() {
 		return func() {
-			env := ReadEnvironment(env_str)
+			env, err := ReadEnvironment(env_str)
+			So(err, ShouldBeNil)
 			props := env.Properties
 
 			var val string
@@ -93,7 +94,8 @@ func TestOvfEnvProperties(t *testing.T) {
 
 func TestOvfEnvPlatform(t *testing.T) {
 	Convey("With vSphere environment", t, func() {
-		env := ReadEnvironment(data_vsphere)
+		env, err := ReadEnvironment(data_vsphere)
+		So(err, ShouldBeNil)
 		platform := env.Platform
 
 		So(platform.Kind, ShouldEqual, "VMware ESXi")
@@ -105,7 +107,8 @@ func TestOvfEnvPlatform(t *testing.T) {
 
 func TestVappRunUserDataUrl(t *testing.T) {
 	Convey("With vAppRun environment", t, func() {
-		env := ReadEnvironment(data_vapprun)
+		env, err := ReadEnvironment(data_vapprun)
+		So(err, ShouldBeNil)
 		props := env.Properties
 
 		var val string
@@ -119,6 +122,7 @@ func TestVappRunUserDataUrl(t *testing.T) {
 
 func TestInvalidData(t *testing.T) {
 	Convey("With invalid data", t, func() {
-		ReadEnvironment(append(data_vsphere, []byte("garbage")...))
+		_, err := ReadEnvironment(append(data_vsphere, []byte("garbage")...))
+		So(err, ShouldBeNil)
 	})
 }
