@@ -16,7 +16,6 @@ package ovf
 
 import (
 	"encoding/xml"
-	"log"
 )
 
 type environment struct {
@@ -41,16 +40,15 @@ type OvfEnvironment struct {
 	Properties map[string]string
 }
 
-func ReadEnvironment(doc []byte) *OvfEnvironment {
+func ReadEnvironment(doc []byte) (OvfEnvironment, error) {
 	var env environment
 	if err := xml.Unmarshal(doc, &env); err != nil {
-		log.Fatalln(err)
+		return OvfEnvironment{}, err
 	}
 
 	dict := make(map[string]string)
 	for _, p := range env.Properties {
 		dict[p.Key] = p.Value
 	}
-	return &OvfEnvironment{Properties: dict,
-		Platform: env.Platform}
+	return OvfEnvironment{Properties: dict, Platform: env.Platform}, nil
 }
